@@ -36,8 +36,8 @@ class TorchBasePolicy(PolicyBase):
         pass  # nothing to do here
 
     def get_action(self, observation):
-        observation = (observation - self.o_mean) @ self.o_cov
         observation = torch.tensor(observation, dtype=torch.float, device=self.device)
+        observation = (observation - self.o_mean) @ self.o_cov
         action = self.policy(observation.unsqueeze(0))
         action = action.detach().numpy()[0]
         action *= self.action_max
@@ -98,6 +98,9 @@ class TorchLiftPolicyMixed(TorchBasePolicy):
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-mixed-v0_model.pt"),map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
+        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
 class PolicyNet(nn.Module):
