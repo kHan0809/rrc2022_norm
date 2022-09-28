@@ -20,3 +20,7 @@ def get_model_path(name: str) -> pathlib.Path:
         raise FileNotFoundError("Model {} not found".format(name))
 
     return model_path
+def get_path(name: str) -> pathlib.Path:
+    here = pathlib.Path(__file__).parent
+    model_path = here / name
+    return model_path
