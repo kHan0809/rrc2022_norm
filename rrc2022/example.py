@@ -51,10 +51,14 @@ class TorchPushPolicyExpert(TorchBasePolicy):
     """
 
     def __init__(self, action_space, observation_space, episode_length):
+        path = policies.get_path("push_expert")
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
-        self.policy.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__))+"/policies/trifinger-cube-push-real-mixed-v0_model.pt",map_location=torch.device('cpu'))["pi"])
-        self.o_mean = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/trifinger-cube-push-real-expert-v0/o_mean.npy")
-        self.o_cov  = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/trifinger-cube-push-real-expert-v0/o_cov.npy")
+        self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-push-real-expert-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
+        self.o_mean = np.load(str(path / "o_mean.npy"))
+        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
+        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
 class TorchPushPolicyMixed(TorchBasePolicy):
@@ -64,10 +68,14 @@ class TorchPushPolicyMixed(TorchBasePolicy):
     """
 
     def __init__(self, action_space, observation_space, episode_length):
+        path = policies.get_path("push_mixed")
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
-        self.policy.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__))+"/policies/trifinger-cube-push-real-mixed-v0_model.pt",map_location=torch.device('cpu'))["pi"])
-        self.o_mean = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/trifinger-cube-push-real-mixed-v0/o_mean.npy")
-        self.o_cov  = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/trifinger-cube-push-real-mixed-v0/o_cov.npy")
+        self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-push-real-mixed-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
+        self.o_mean = np.load(str(path / "o_mean.npy"))
+        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
+        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
 
@@ -78,10 +86,14 @@ class TorchLiftPolicyExpert(TorchBasePolicy):
     """
 
     def __init__(self, action_space, observation_space, episode_length):
+        path = policies.get_path("lift_expert")
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
-        self.policy.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__))+"/policies/trifinger-cube-lift-real-expert-v0_model.pt",map_location=torch.device('cpu'))["pi"])
-        self.o_mean = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/trifinger-cube-lift-real-expert-v0/o_mean.npy")
-        self.o_cov = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/trifinger-cube-lift-real-expert-v0/o_cov.npy")
+        self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-expert-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
+        self.o_mean = np.load(str(path / "o_mean.npy"))
+        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
+        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
 class TorchLiftPolicyMixed(TorchBasePolicy):
@@ -92,9 +104,6 @@ class TorchLiftPolicyMixed(TorchBasePolicy):
     def __init__(self, action_space, observation_space, episode_length):
         path = policies.get_path("lift_mixed")
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
-        # self.policy.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__))+"/policies/trifinger-cube-lift-real-mixed-v0_model.pt",map_location=torch.device('cpu'))["pi"])
-        # self.o_mean = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/lift_mixed/o_mean.npy")
-        # self.o_cov = np.load(os.path.dirname(os.path.abspath(__file__)) + "/policies/lift_mixed/o_cov.npy")
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-mixed-v0_model.pt"),map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_cov = np.load(str(path / "o_cov.npy"))
@@ -111,8 +120,8 @@ class PolicyNet(nn.Module):
         self.fc1 = nn.Linear(o_dim, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, a_dim)
-        self.relu1 = nn.ReLU()
-        self.relu2 = nn.ReLU()
+        self.relu1 = nn.GELU()
+        self.relu2 = nn.GELU()
         self.tanh  = nn.Tanh()
 
     def forward(self, o):
