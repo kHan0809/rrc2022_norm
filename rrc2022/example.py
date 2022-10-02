@@ -25,7 +25,9 @@ class TorchBasePolicy(PolicyBase):
 
         # load torch script
         self.action_space = action_space
+        self.obs_dim = observation_space.shape[0]
         self.action_max = self.action_space.high[0]
+        self.init_state_count = 0
 
 
     @staticmethod
@@ -36,6 +38,10 @@ class TorchBasePolicy(PolicyBase):
         pass  # nothing to do here
 
     def get_action(self, observation):
+        if self.init_state_count == 0:
+            self.stack_state = reset_state(observation)
+        else:
+            self.stack_state = stack_state(self.stack_state,observation,self.obs_dim)
         observation = torch.tensor(observation, dtype=torch.float, device=self.device)
         observation = (observation - self.o_mean) @ self.o_cov
         action = self.policy(observation.unsqueeze(0))
@@ -52,7 +58,7 @@ class TorchPushPolicyExpert(TorchBasePolicy):
 
     def __init__(self, action_space, observation_space, episode_length):
         path = policies.get_path("push_expert")
-        self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
+        self.policy = PolicyNet(observation_space.shape[0]*3, action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-push-real-expert-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_cov = np.load(str(path / "o_cov.npy"))
@@ -69,7 +75,7 @@ class TorchPushPolicyMixed(TorchBasePolicy):
 
     def __init__(self, action_space, observation_space, episode_length):
         path = policies.get_path("push_mixed")
-        self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
+        self.policy = PolicyNet(observation_space.shape[0]*3, action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-push-real-mixed-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_cov = np.load(str(path / "o_cov.npy"))
@@ -87,7 +93,7 @@ class TorchLiftPolicyExpert(TorchBasePolicy):
 
     def __init__(self, action_space, observation_space, episode_length):
         path = policies.get_path("lift_expert")
-        self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
+        self.policy = PolicyNet(observation_space.shape[0]*3, action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-expert-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_cov = np.load(str(path / "o_cov.npy"))
@@ -103,7 +109,7 @@ class TorchLiftPolicyMixed(TorchBasePolicy):
     """
     def __init__(self, action_space, observation_space, episode_length):
         path = policies.get_path("lift_mixed")
-        self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
+        self.policy = PolicyNet(observation_space.shape[0]*3, action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-mixed-v0_model1000000.pt"),map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_cov = np.load(str(path / "o_cov.npy"))
@@ -129,3 +135,10 @@ class PolicyNet(nn.Module):
         layer = self.relu2(self.fc2(layer))
         action = self.tanh(self.fc3(layer))
         return action
+
+def reset_state(obs):
+    new_obs=np.concatenate((obs,obs,obs))
+    return new_obs
+def stack_state(pre_stack_obs,obs,o_dim):
+    new_obs = np.concatenate((pre_stack_obs[o_dim:],obs))
+    return new_obs
