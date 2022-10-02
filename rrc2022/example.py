@@ -38,14 +38,14 @@ class TorchBasePolicy(PolicyBase):
         pass  # nothing to do here
 
     def get_action(self, observation):
+        observation = torch.tensor(observation, dtype=torch.float, device=self.device)
         observation = (observation - self.o_mean) @ self.o_cov
         if self.init_state_count == 0:
             self.stack_state = reset_state(observation)
         else:
             self.stack_state = stack_state(self.stack_state,observation,self.obs_dim)
-        input_obs = torch.tensor(self.stack_state, dtype=torch.float, device=self.device)
-        
-        action = self.policy(input_obs.unsqueeze(0))
+
+        action = self.policy(self.stack_state.unsqueeze(0))
         action = action.detach().numpy()[0]
         action *= self.action_max
         return action
@@ -137,9 +137,10 @@ class PolicyNet(nn.Module):
         action = self.tanh(self.fc3(layer))
         return action
 
+
 def reset_state(obs):
-    new_obs=np.concatenate((obs,obs,obs))
+    new_obs=torch.cat((obs,obs,obs))
     return new_obs
 def stack_state(pre_stack_obs,obs,o_dim):
-    new_obs = np.concatenate((pre_stack_obs[o_dim:],obs))
+    new_obs = np.cat((pre_stack_obs[o_dim:],obs))
     return new_obs
