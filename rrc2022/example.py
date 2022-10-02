@@ -38,13 +38,14 @@ class TorchBasePolicy(PolicyBase):
         pass  # nothing to do here
 
     def get_action(self, observation):
+        observation = (observation - self.o_mean) @ self.o_cov
         if self.init_state_count == 0:
             self.stack_state = reset_state(observation)
         else:
             self.stack_state = stack_state(self.stack_state,observation,self.obs_dim)
-        observation = torch.tensor(observation, dtype=torch.float, device=self.device)
-        observation = (observation - self.o_mean) @ self.o_cov
-        action = self.policy(observation.unsqueeze(0))
+        input_obs = torch.tensor(self.stack_state, dtype=torch.float, device=self.device)
+        
+        action = self.policy(input_obs.unsqueeze(0))
         action = action.detach().numpy()[0]
         action *= self.action_max
         return action
