@@ -104,7 +104,7 @@ class TorchLiftPolicyMixed(TorchBasePolicy):
     def __init__(self, action_space, observation_space, episode_length):
         path = policies.get_path("lift_mixed")
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
-        self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-mixed-v0_model1000000.pt"),map_location=torch.device('cpu'))["pi"])
+        self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-mixed-v0_model.pt"),map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
         self.o_std = np.load(str(path / "o_std.npy"))
         self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
