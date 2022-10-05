@@ -37,7 +37,7 @@ class TorchBasePolicy(PolicyBase):
 
     def get_action(self, observation):
         observation = torch.tensor(observation, dtype=torch.float, device=self.device)
-        observation = (observation - self.o_mean) @ self.o_cov
+        observation = (observation - self.o_mean) / (self.o_std + 1e-3)
         action = self.policy(observation.unsqueeze(0))
         action = action.detach().numpy()[0]
         action *= self.action_max
@@ -55,9 +55,9 @@ class TorchPushPolicyExpert(TorchBasePolicy):
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-push-real-expert-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
-        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_std = np.load(str(path / "o_std.npy"))
         self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
-        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+        self.o_std = torch.tensor(self.o_std, dtype=torch.float, device="cpu")
 
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
@@ -72,9 +72,9 @@ class TorchPushPolicyMixed(TorchBasePolicy):
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-push-real-mixed-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
-        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_std = np.load(str(path / "o_std.npy"))
         self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
-        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+        self.o_std = torch.tensor(self.o_std, dtype=torch.float, device="cpu")
 
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
@@ -90,9 +90,9 @@ class TorchLiftPolicyExpert(TorchBasePolicy):
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-expert-v0_model.pt"), map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
-        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_std = np.load(str(path / "o_std.npy"))
         self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
-        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+        self.o_std = torch.tensor(self.o_std, dtype=torch.float, device="cpu")
 
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
@@ -106,9 +106,9 @@ class TorchLiftPolicyMixed(TorchBasePolicy):
         self.policy = PolicyNet(observation_space.shape[0], action_space.shape[0])
         self.policy.load_state_dict(torch.load(str(path / "trifinger-cube-lift-real-mixed-v0_model1000000.pt"),map_location=torch.device('cpu'))["pi"])
         self.o_mean = np.load(str(path / "o_mean.npy"))
-        self.o_cov = np.load(str(path / "o_cov.npy"))
+        self.o_std = np.load(str(path / "o_std.npy"))
         self.o_mean = torch.tensor(self.o_mean, dtype=torch.float, device="cpu")
-        self.o_cov = torch.tensor(self.o_cov, dtype=torch.float, device="cpu")
+        self.o_std = torch.tensor(self.o_std, dtype=torch.float, device="cpu")
 
         super().__init__(self.policy, action_space, observation_space, episode_length)
 
